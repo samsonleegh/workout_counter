@@ -20,7 +20,7 @@ let lastPose = "No ex"
 let brain;
 let poseLabel = "";
 
-var audio = new Audio('../ding.mp3');
+var audio = new Audio('../sound/ding.mp3');
 
 // var up_arr = ["TOP_UP", "MID_UP", "BOT_UP"];
 // var down_arr = ["TOP_DOWN", "MID_DOWN", "BOT_DOWN"];
