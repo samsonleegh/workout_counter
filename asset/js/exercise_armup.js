@@ -20,7 +20,7 @@ let lastPose = "No ex"
 let brain;
 let poseLabel = "";
 
-var audio = new Audio('../ding.mp3');
+var audio = new Audio('../sound/ding.mp3');
 
 // var up_arr = ["TOP_UP", "MID_UP", "BOT_UP"];
 // var down_arr = ["TOP_DOWN", "MID_DOWN", "BOT_DOWN"];
@@ -32,6 +32,7 @@ function setup() {
   var cnv = createCanvas(640, 480);
   var x = (windowWidth - width) / 2;
   var y = (windowHeight - height) / 2;
+  cnv.position(x, y);
   video = createCapture(VIDEO);
   video.hide();
   poseNet = ml5.poseNet(video, modelLoaded);
@@ -45,9 +46,9 @@ function setup() {
   }
   brain = ml5.neuralNetwork(options);
   const modelInfo = {
-    model: '../models/situpmodel/model.json',
-    metadata: '../models/situpmodel/model_meta.json',
-    weights: '../models/situpmodel/model.weights.bin',
+    model: './asset/models/armupmodel/model.json',
+    metadata: './asset/models/armupmodel/model_meta.json',
+    weights: './asset/models/armupmodel/model.weights.bin',
   };
   brain.load(modelInfo, brainLoaded);
 }
