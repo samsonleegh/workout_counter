@@ -37,12 +37,12 @@ function setup() {
     ]
   }
   brain = ml5.neuralNetwork(options);
-  brain.loadData('armup.json', dataReady);
+  brain.loadData('data/situp_data.json', dataReady);
 }
 
 function dataReady() {
   brain.normalizeData();
-  brain.train({epochs: 50}, finished); 
+  brain.train({epochs: 40}, finished); 
 }
 
 function finished() {

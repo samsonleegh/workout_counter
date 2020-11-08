@@ -20,6 +20,8 @@ let brain;
 let state = 'waiting';
 let targeLabel;
 
+var audio = new Audio('ding.mp3');
+
 function delay(time) {
   return new Promise((resolve, reject) => {
     if (isNaN(time)) {
@@ -33,28 +35,32 @@ function delay(time) {
 async function keyPressed() {
   if (key == 's') {
     brain.saveData();
-  } else if (key == 'd') {
+  } else if (key == '1') {
     
-    targetLabel = 'Down';  
+    targetLabel = 'UP';  
     console.log(targetLabel);
     
-    await delay(3000);
+    await delay(10000);
+    audio.play();
     console.log('collecting');
     state = 'collecting';
     
     await delay(30000);
+    audio.play();
     console.log('not collecting');
     state = 'waiting';
-  } else if (key == 'u') {
+  } else if (key == '2') {
     
-    targetLabel = 'Up';  
+    targetLabel = 'DOWN';  
     console.log(targetLabel);
     
-    await delay(3000);
+    await delay(10000);
+    audio.play();
     console.log('collecting');
     state = 'collecting';
     
     await delay(30000);
+    audio.play();
     console.log('not collecting');
     state = 'waiting';
   }
