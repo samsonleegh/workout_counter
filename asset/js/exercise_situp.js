@@ -34,7 +34,7 @@ function setup() {
   var y = (windowHeight - height) / 2;
   video = createCapture(VIDEO);
   video.hide();
-  poseNet = ml5.poseNet(video, modelLoaded);
+  poseNet = ml5.poseNet(video, 'ResNet50', 'single', modelLoaded);
   poseNet.on('pose', gotPoses);
 
   let options = {
