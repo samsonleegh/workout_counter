@@ -20,7 +20,7 @@ let lastPose = "No ex"
 let brain;
 let poseLabel = "";
 
-var audio = new Audio('../sound/ding.mp3');
+var audio = new Audio('./asset/sound/ding.mp3');
 
 // var up_arr = ["TOP_UP", "MID_UP", "BOT_UP"];
 // var down_arr = ["TOP_DOWN", "MID_DOWN", "BOT_DOWN"];
@@ -88,7 +88,7 @@ function gotResult(error, results) {
     console.log("lastpose: "+lastPose);
     console.log("current: " + poseLabel);
     console.log("current confidence: " + results[0].confidence);
-    audio.play();
+    // audio.play();
     count++;
   }
   // console.log(results[0].confidence);
