@@ -20,7 +20,7 @@ let lastPose = "No ex"
 let brain;
 let poseLabel = "";
 
-var audio = new Audio('../sound/ding.mp3');
+var audio = new Audio("asset/sound/ding.mp3");
 
 // var up_arr = ["TOP_UP", "MID_UP", "BOT_UP"];
 // var down_arr = ["TOP_DOWN", "MID_DOWN", "BOT_DOWN"];
@@ -28,15 +28,38 @@ var audio = new Audio('../sound/ding.mp3');
 // var down_arr = ["DOWN"];
 
 function setup() {
-  // createCanvas(640, 480);
+  // Canvas
   var cnv = createCanvas(640, 480);
   var x = (windowWidth - width) / 2;
   var y = (windowHeight - height) / 2;
-  video = createCapture(VIDEO);
-  video.hide();
-  poseNet = ml5.poseNet(video, 'ResNet50', 'single', modelLoaded);
-  poseNet.on('pose', gotPoses);
 
+  // Video capture functionality
+
+  let videoCaptureSettings = {
+      video: {
+        mandatory: {
+          maxWidth: 640,
+          maxHeight: 480
+      },
+      optional: [{ maxFrameRate: 15 }]
+    },
+    // audio: true
+  };
+  video = createCapture(videoCaptureSettings);
+  // video = createCapture(VIDEO);
+  video.hide();
+
+  // Load PoseNet Model with ml5 wrapper
+  let poseNetOptions = {
+    architecture: 'ResNet50',
+    detectionType: 'single',
+    outputStride: 32,
+    inputResolution: 200
+  };
+  poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
+  poseNet.on('pose', gotPoses)
+
+  // Neural Network specifications
   let options = {
     inputs: 34,
     outputs: 2,
@@ -44,21 +67,34 @@ function setup() {
     debug: true
   }
 
+  // Initiate NN
   brain = ml5.neuralNetwork(options);
+
+  // Import trained NN model specifications
   const modelInfo = {
-    model: '../models/pushupmodel/model.json',
-    metadata: '../models/pushupmodel/model_meta.json',
-    weights: '../models/pushupmodel/model.weights.bin',
+    model: 'asset/models/pushupmodel/model.json',
+    metadata: 'asset/models/pushupmodel/model_meta.json',
+    weights: 'asset/models/pushupmodel/model.weights.bin',
   };
+
+  // Import trained model
   brain.load(modelInfo, brainLoaded);
 }
 
 function brainLoaded() {
+  /*
+  Callback function for executing classification after trained model loaded
+  */
   console.log('pose classification ready!');
   classifyPose();
 }
 
 function classifyPose() {
+  /*
+  Sub callback function within brainLoaded, to execute pose classification
+  */
+  
+  // when PoseNet is running
   if (pose) {
     let inputs = [];
     for (let i = 0; i < pose.keypoints.length; i++) {
@@ -75,14 +111,16 @@ function classifyPose() {
 }
 
 function gotResult(error, results) {
-  // console.log(results);
-  // console.log(results[0]);
-  // console.log(results[0].label.toUpperCase());
-  // count_disp.innerHTML = count;
-  // console.log(results[0])
+  /*
+  Counter engine, running by classified pose states
+  */
+
+  // Log pose state - UP or DOWN
   if (results[0].confidence >= 0.8) {
     poseLabel = results[0].label.toUpperCase();
   } 
+
+  // 1 Push Up Rep
   if (lastPose == "DOWN" && poseLabel == "UP") {
   // if (down_arr.contains(lastPose) && up_arr.contains(poseLabel)) {
     console.log("lastpose: "+lastPose);
@@ -98,7 +136,11 @@ function gotResult(error, results) {
 
 
 function gotPoses(poses) {
+  /*
+  Callback function to handle PoseNet object "pose" event
+  */
   if (poses.length > 0) {
+    console.log(pose);
     pose = poses[0].pose;
     skeleton = poses[0].skeleton;
   }
@@ -106,6 +148,9 @@ function gotPoses(poses) {
 
 
 function modelLoaded() {
+  /*
+  Callback when poseNet model load is complete
+  */
   console.log('poseNet ready');
 }
 
