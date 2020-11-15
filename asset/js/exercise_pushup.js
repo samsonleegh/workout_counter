@@ -34,7 +34,7 @@ function setup() {
   var y = (windowHeight - height) / 2;
   video = createCapture(VIDEO);
   video.hide();
-  poseNet = ml5.poseNet(video, modelLoaded);
+  poseNet = ml5.poseNet(video, 'ResNet50', 'single', modelLoaded);
   poseNet.on('pose', gotPoses);
 
   let options = {
@@ -43,6 +43,7 @@ function setup() {
     task: 'classification',
     debug: true
   }
+
   brain = ml5.neuralNetwork(options);
   const modelInfo = {
     model: '../models/pushupmodel/model.json',
@@ -118,17 +119,21 @@ function draw() {
     for (let i = 0; i < skeleton.length; i++) {
       let a = skeleton[i][0];
       let b = skeleton[i][1];
-      strokeWeight(2);
-      stroke(0);
+      // strokeWeight(2);
+      // stroke(0);
+      strokeWeight(1.5);
+      stroke(255,0,0);
 
       line(a.position.x, a.position.y, b.position.x, b.position.y);
     }
     for (let i = 0; i < pose.keypoints.length; i++) {
       let x = pose.keypoints[i].position.x;
       let y = pose.keypoints[i].position.y;
-      fill(0);
-      stroke(255);
-      ellipse(x, y, 16, 16);
+      // fill(0);
+      // stroke(255);
+      // ellipse(x, y, 16, 16);
+      fill(255, 0, 0);
+      ellipse(x, y, 10, 10);
     }
   }
   pop();
