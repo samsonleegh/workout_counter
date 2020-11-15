@@ -17,6 +17,9 @@ let skeleton;
 let count = 0;
 let lastPose = "No ex"
 
+var prevLeftYDist;
+var prevRightYDist;
+
 let brain;
 let poseLabel = "";
 
@@ -54,7 +57,8 @@ function setup() {
     architecture: 'ResNet50',
     outputStride: 32,
     detectionType: 'single',
-    inputResolution: 193,
+    // inputResolution: 193,
+    inputResolution: 161
     }
 
   poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
@@ -132,7 +136,53 @@ function gotResult(error, results) {
   }
   // console.log(results[0].confidence);
   classifyPose();
-  lastPose =  poseLabel
+  lastPose =  poseLabel;
+}
+
+function pushUp(pose){
+  /* Rule base push up counter */
+  let confidenceThreshold = 0.35;
+  let heightTolerance = 10;
+  let leftYDist;
+  let rightYDist;
+
+  function jointDistEvaluate(joint1, joint2, confidenceThreshold){
+    let jointDist = null;
+    if (pose[joint1].score >= confidenceThreshold && pose[joint2].score >= confidenceThreshold) {
+      jointDist = pose[joint1].position.y - pose[joint2].position.y;;
+    }
+    return jointDist;
+  }
+
+  // y distance left shoulder to left elbow
+  leftYDist = jointDistEvaluate(5, 7, confidenceThreshold);
+  // y distance right shoulder to right elbow
+  rightYDist = jointDistEvaluate(6, 8, confidenceThreshold);
+
+  // left rep count
+  if (leftYDist) {
+    leftCount = pushUpCountCheckRule(leftYDist, prevLeftYDist, heightTolerance);
+    prevLeftYDist = leftYDist;
+  }
+
+  // right rep count
+  if (rightYDist) {
+    rightCount = pushUpCountCheckRule(rightYDist, prevRightYDist, heightTolerance);
+    prevRightYDist = rightYDist;
+  }
+
+  if (leftCount || rightCount) {
+    count++;
+  }
+}
+
+function pushUpCountCheckRule(currentYDist, prevYDist, heightTolerance){
+  if ((Math.abs(currentYDist) <= heightTolerance) && (Math.abs(prevYDist) > heightTolerance)) {
+    // Count Rep
+    return true;
+  } else {
+    return false;
+  }
 }
 
 
@@ -141,9 +191,9 @@ function gotPoses(poses) {
   Callback function to handle PoseNet object "pose" event
   */
   if (poses.length > 0) {
-    console.log(pose);
     pose = poses[0].pose;
     skeleton = poses[0].skeleton;
+    console.log(skeleton);
   }
 }
 
@@ -178,7 +228,7 @@ function draw() {
       // fill(0);
       // stroke(255);
       // ellipse(x, y, 16, 16);
-      fill(255, 0, 0);
+      fill(0, 0, 0);
       ellipse(x, y, 10, 10);
       // Body part text features For development purposes. TODO: REMOVE LATER
       textSize(14);
