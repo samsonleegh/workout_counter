@@ -51,21 +51,22 @@ function setup() {
 
   // Load PoseNet Model with ml5 wrapper
   let poseNetOptions = {
-    // architecture: 'ResNet50',
-    // detectionType: 'single',
-    // outputStride: 32,
-    // inputResolution: 200
-  };
+    architecture: 'ResNet50',
+    outputStride: 32,
+    detectionType: 'single',
+    inputResolution: 193,
+    }
+
   poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
-  poseNet.on('pose', gotPoses)
+  poseNet.on('pose', gotPoses);
 
   // Neural Network specifications
   let options = {
     inputs: 34,
     outputs: 2,
     task: 'classification',
-    debug: true
-  }
+    debug: true,
+  };
 
   // Initiate NN
   brain = ml5.neuralNetwork(options);
@@ -120,7 +121,7 @@ function gotResult(error, results) {
     poseLabel = results[0].label.toUpperCase();
   } 
 
-  // 1 Push Up Rep
+  // 1 Push Up Rep condition (classification method)
   if (lastPose == "DOWN" && poseLabel == "UP") {
   // if (down_arr.contains(lastPose) && up_arr.contains(poseLabel)) {
     console.log("lastpose: "+lastPose);
@@ -179,6 +180,10 @@ function draw() {
       // ellipse(x, y, 16, 16);
       fill(255, 0, 0);
       ellipse(x, y, 10, 10);
+      // Body part text features For development purposes. TODO: REMOVE LATER
+      textSize(14);
+      fill(0);
+      text(pose.keypoints[i].part, x + 10, y + 10);
     }
   }
   pop();
