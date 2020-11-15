@@ -43,7 +43,7 @@ function setup() {
       },
       optional: [{ maxFrameRate: 15 }]
     },
-    // audio: true
+    audio: false
   };
   video = createCapture(videoCaptureSettings);
   // video = createCapture(VIDEO);
@@ -51,10 +51,10 @@ function setup() {
 
   // Load PoseNet Model with ml5 wrapper
   let poseNetOptions = {
-    architecture: 'ResNet50',
-    detectionType: 'single',
-    outputStride: 32,
-    inputResolution: 200
+    // architecture: 'ResNet50',
+    // detectionType: 'single',
+    // outputStride: 32,
+    // inputResolution: 200
   };
   poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
   poseNet.on('pose', gotPoses)
