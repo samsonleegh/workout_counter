@@ -15,7 +15,11 @@ let poseNet;
 let pose;
 let skeleton;
 let count = 0;
-let lastPose = "No ex"
+let lastPose = ""
+
+// let prevLeftYDist = 9999;
+// let prevRightYDist = 9999;
+let dist;
 
 let brain;
 let poseLabel = "";
@@ -33,81 +37,91 @@ function setup() {
   var x = (windowWidth - width) / 2;
   var y = (windowHeight - height) / 2;
   cnv.position(x, y);
-  video = createCapture(VIDEO);
-  video.hide();
-  poseNet = ml5.poseNet(video, 'ResNet50', 'single', modelLoaded);
-  poseNet.on('pose', gotPoses);
-
-  let options = {
-    inputs: 34,
-    outputs: 2,
-    task: 'classification',
-    debug: true
-  }
-  brain = ml5.neuralNetwork(options);
-  const modelInfo = {
-    model: './asset/models/armupmodel/model.json',
-    metadata: './asset/models/armupmodel/model_meta.json',
-    weights: './asset/models/armupmodel/model.weights.bin',
+  // Video capture functionality
+  let videoCaptureSettings = {
+      video: {
+        mandatory: {
+          maxWidth: 640,
+          maxHeight: 480
+      },
+      optional: [{ maxFrameRate: 15 }]
+    },
+    audio: false
   };
-  brain.load(modelInfo, brainLoaded);
+  video = createCapture(videoCaptureSettings);
+  // video = createCapture(VIDEO);
+  video.hide();
+  poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
+  poseNet.on('pose', gotPoses);
+  armsUp();
 }
 
-function brainLoaded() {
-  console.log('pose classification ready!');
-  classifyPose();
-}
-
-function classifyPose() {
-  if (pose) {
-    let inputs = [];
-    for (let i = 0; i < pose.keypoints.length; i++) {
-      let x = pose.keypoints[i].position.x;
-      let y = pose.keypoints[i].position.y;
-      inputs.push(x);
-      inputs.push(y);
-    }
-    brain.classify(inputs, gotResult);
-  } else {
-    poseLabel = 'Start'
-    setTimeout(classifyPose, 100);
+// Load PoseNet Model with ml5 wrapper
+let poseNetOptions = {
+  architecture: 'ResNet50',
+  outputStride: 32,
+  detectionType: 'single',
+  // inputResolution: 193,
+  inputResolution: 161
   }
-}
-
-function gotResult(error, results) {
-  // console.log(results);
-  // console.log(results[0]);
-  // console.log(results[0].label.toUpperCase());
-  // count_disp.innerHTML = count;
-  // console.log(results[0])
-  if (results[0].confidence >= 0.8) {
-    poseLabel = results[0].label.toUpperCase();
-  } 
-  if (lastPose == "DOWN" && poseLabel == "UP") {
-  // if (down_arr.contains(lastPose) && up_arr.contains(poseLabel)) {
-    console.log("lastpose: "+lastPose);
-    console.log("current: " + poseLabel);
-    console.log("current confidence: " + results[0].confidence);
-    // audio.play();
-    count++;
-  }
-  // console.log(results[0].confidence);
-  classifyPose();
-  lastPose =  poseLabel
-}
-
 
 function gotPoses(poses) {
+  // console.log(poses);
   if (poses.length > 0) {
     pose = poses[0].pose;
     skeleton = poses[0].skeleton;
   }
 }
 
-
 function modelLoaded() {
   console.log('poseNet ready');
 }
+
+function armsUp(){
+  if (pose) {
+    /* Rule base push up counter */
+    let confidenceThreshold = 0.3;
+    let downHeightTolerance = 150;
+    let upHeightTolerance = 70;
+    let leftYDist;
+    let rightYDist;
+  
+    function jointDistEvaluate(joint1, joint2, confidenceThreshold){
+      let jointDist = null;
+      if (pose.keypoints[joint1].score >= confidenceThreshold && pose.keypoints[joint2].score >= confidenceThreshold) {
+        jointDist = pose.keypoints[joint1].position.y - pose.keypoints[joint2].position.y;;
+      } 
+      return jointDist;
+    }
+    
+    // distance between shoulders and wrists
+    leftYDist = jointDistEvaluate(5, 9, confidenceThreshold);
+    rightYDist = jointDistEvaluate(6, 10, confidenceThreshold);
+
+    function classifyPose() {
+      if ((Math.abs(leftYDist) >= downHeightTolerance) | (Math.abs(rightYDist) >= downHeightTolerance)) {
+        poseLabel = "DOWN";
+      }
+      else if ((Math.abs(leftYDist) <= upHeightTolerance) | (Math.abs(rightYDist) <= upHeightTolerance)) {
+        poseLabel = "UP";
+      }
+      console.log("poseLabel: " + poseLabel);
+      if (lastPose == "DOWN" && poseLabel == "UP") {
+        console.log("lastpose: "+lastPose);
+        console.log("current: " + poseLabel);
+        audio.play();
+        count++;
+      }
+      lastPose =  poseLabel
+    }
+
+    classifyPose();
+
+  }
+  setTimeout(armsUp, 100);
+}
+  
+
 
 function draw() {
   push();
@@ -119,17 +133,21 @@ function draw() {
     for (let i = 0; i < skeleton.length; i++) {
       let a = skeleton[i][0];
       let b = skeleton[i][1];
-      strokeWeight(2);
-      stroke(0);
+      // strokeWeight(2);
+      // stroke(0);
+      strokeWeight(1.5);
+      stroke(255,0,0);
 
       line(a.position.x, a.position.y, b.position.x, b.position.y);
     }
     for (let i = 0; i < pose.keypoints.length; i++) {
       let x = pose.keypoints[i].position.x;
       let y = pose.keypoints[i].position.y;
-      fill(0);
-      stroke(255);
-      ellipse(x, y, 16, 16);
+      // fill(0);
+      // stroke(255);
+      // ellipse(x, y, 16, 16);
+      fill(0, 0, 0);
+      ellipse(x, y, 10, 10);
     }
   }
   pop();

@@ -15,7 +15,16 @@ let poseNet;
 let pose;
 let skeleton;
 let count = 0;
-let lastPose = "No ex"
+let lastPose = ""
+
+let lastLeftYDist = ""
+let lastRightYDist = ""
+let lastLeftXDist = ""
+let lastRightXDist = ""
+
+// let prevLeftYDist = 9999;
+// let prevRightYDist = 9999;
+let dist;
 
 let brain;
 let poseLabel = "";
@@ -32,81 +41,151 @@ function setup() {
   var cnv = createCanvas(640, 480);
   var x = (windowWidth - width) / 2;
   var y = (windowHeight - height) / 2;
-  video = createCapture(VIDEO);
-  video.hide();
-  poseNet = ml5.poseNet(video, 'ResNet50', 'single', modelLoaded);
-  poseNet.on('pose', gotPoses);
-
-  let options = {
-    inputs: 34,
-    outputs: 2,
-    task: 'classification',
-    debug: true
-  }
-  brain = ml5.neuralNetwork(options);
-  const modelInfo = {
-    model: '../models/situpmodel/model.json',
-    metadata: '../models/situpmodel/model_meta.json',
-    weights: '../models/situpmodel/model.weights.bin',
+  cnv.position(x, y);
+  // Video capture functionality
+  let videoCaptureSettings = {
+      video: {
+        mandatory: {
+          maxWidth: 640,
+          maxHeight: 480
+      },
+      optional: [{ maxFrameRate: 15 }]
+    },
+    audio: false
   };
-  brain.load(modelInfo, brainLoaded);
+  video = createCapture(videoCaptureSettings);
+  // video = createCapture(VIDEO);
+  video.hide();
+  poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
+  poseNet.on('pose', gotPoses);
+  armsUp();
 }
 
-function brainLoaded() {
-  console.log('pose classification ready!');
-  classifyPose();
-}
-
-function classifyPose() {
-  if (pose) {
-    let inputs = [];
-    for (let i = 0; i < pose.keypoints.length; i++) {
-      let x = pose.keypoints[i].position.x;
-      let y = pose.keypoints[i].position.y;
-      inputs.push(x);
-      inputs.push(y);
-    }
-    brain.classify(inputs, gotResult);
-  } else {
-    poseLabel = 'Start'
-    setTimeout(classifyPose, 100);
+// Load PoseNet Model with ml5 wrapper
+let poseNetOptions = {
+  architecture: 'ResNet50',
+  outputStride: 32,
+  detectionType: 'single',
+  // inputResolution: 193,
+  inputResolution: 161
   }
-}
-
-function gotResult(error, results) {
-  // console.log(results);
-  // console.log(results[0]);
-  // console.log(results[0].label.toUpperCase());
-  // count_disp.innerHTML = count;
-  // console.log(results[0])
-  if (results[0].confidence >= 0.8) {
-    poseLabel = results[0].label.toUpperCase();
-  } 
-  if (lastPose == "DOWN" && poseLabel == "UP") {
-  // if (down_arr.contains(lastPose) && up_arr.contains(poseLabel)) {
-    console.log("lastpose: "+lastPose);
-    console.log("current: " + poseLabel);
-    console.log("current confidence: " + results[0].confidence);
-    audio.play();
-    count++;
-  }
-  // console.log(results[0].confidence);
-  classifyPose();
-  lastPose =  poseLabel
-}
-
 
 function gotPoses(poses) {
+  // console.log(poses);
   if (poses.length > 0) {
     pose = poses[0].pose;
     skeleton = poses[0].skeleton;
   }
 }
 
-
 function modelLoaded() {
   console.log('poseNet ready');
 }
+
+function armsUp(){
+  if (pose) {
+    /* Rule base push up counter */
+    let confidenceThreshold = 0.5;
+    let downHeightTolerance = 150;
+    let upHeightTolerance = 70;
+    let leftYDist;
+    let rightYDist;
+    let leftXDist;
+    let rightXDist;
+  
+    function jointYDistEvaluate(joint1, joint2, confidenceThreshold){
+      let jointDist = null;
+      if (pose.keypoints[joint1].score >= confidenceThreshold && pose.keypoints[joint2].score >= confidenceThreshold) {
+        jointDist = pose.keypoints[joint1].position.y - pose.keypoints[joint2].position.y;;
+      } 
+      return jointDist;
+    }
+    function jointXDistEvaluate(joint1, joint2, confidenceThreshold){
+      let jointDist = null;
+      if (pose.keypoints[joint1].score >= confidenceThreshold && pose.keypoints[joint2].score >= confidenceThreshold) {
+        jointDist = pose.keypoints[joint1].position.x - pose.keypoints[joint2].position.x;;
+      } 
+      return jointDist;
+    }
+
+    // distance between elbow and knees
+    leftYDist = jointYDistEvaluate(7, 13, confidenceThreshold);
+    rightYDist = jointYDistEvaluate(8, 14, confidenceThreshold);
+    leftXDist = jointXDistEvaluate(7, 13, confidenceThreshold);
+    righXYDist = jointXDistEvaluate(8, 14, confidenceThreshold);
+
+    /*
+    * Calculates the angle ABC (in radians) 
+    *
+    * joint1 first point, ex: {x: 0, y: 0}
+    * joint3 second point
+    * joint2 center point
+    */
+    function find_angle(joint1,joint2,joint3) {
+      let joinAngle = null;
+      if (pose.keypoints[joint1].score >= confidenceThreshold 
+        && pose.keypoints[joint2].score >= confidenceThreshold
+        && pose.keypoints[joint3].score >= confidenceThreshold
+        ) {
+          var A = pose.keypoints[joint1].position
+          var B = pose.keypoints[joint2].position
+          var C = pose.keypoints[joint3].position
+          var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));    
+          var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2)); 
+          var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
+          joinAngle = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+      } 
+      return joinAngle
+    }
+
+    // hip-knee-ankle joints to get knee angle
+    leftKneeAngle = find_angle(11,13,15)
+    rightKneeAngle = find_angle(12,14,16)
+
+    function classifyPose() {
+      // left OR right knee must be of sit up angle
+      // X OR Y distance (depending on position) of elbows and knees should be far from each other
+      if ((leftKneeAngle <= 150 | rightKneeAngle <= 150)
+          && ((Math.abs(leftYDist) >= downHeightTolerance) | (Math.abs(rightYDist) >= downHeightTolerance) 
+            |(Math.abs(leftXDist) >= downHeightTolerance) | (Math.abs(righXYDist) >= downHeightTolerance))
+      ) {
+        poseLabel = "DOWN";
+      }
+      // left OR right knee must be of sit up angle
+      // X AND Y distance of elbows and knees must be near each other
+      else if ((leftKneeAngle <= 150 | rightKneeAngle <= 150)
+              && (Math.abs(leftYDist) <= upHeightTolerance) && (Math.abs(leftXDist) <= upHeightTolerance)
+                |(Math.abs(rightYDist) <= upHeightTolerance) && (Math.abs(righXYDist) <= upHeightTolerance)
+      ) {
+        poseLabel = "UP";
+      }
+      console.log("poseLabel: " + poseLabel);
+
+      if (lastPose == "DOWN" && poseLabel == "UP") {
+        console.log("current: " + poseLabel);
+        console.log("prev pose: "+lastPose);
+        console.log("current leftYDist: " + leftYDist);
+        console.log("current leftXDist: " + leftXDist);
+        console.log("prev leftYDist: " + lastLeftYDist);
+        console.log("prev leftXDist: " + lastLeftXDist);
+        console.log("current rightYDist: " + rightYDist);
+        console.log("current rightXDist: " + rightXDist);
+        console.log("prev rightYDist: " + lastRightYDist);
+        console.log("prev rightXDist: " + lastRightXDist);
+        audio.play();
+        count++;
+      }
+      lastPose =  poseLabel
+      lastLeftYDist =  leftYDist
+      lastRightYDist =  rightYDist
+    }
+
+    classifyPose();
+
+  }
+  setTimeout(armsUp, 100);
+}
+
 
 function draw() {
   push();
@@ -118,17 +197,21 @@ function draw() {
     for (let i = 0; i < skeleton.length; i++) {
       let a = skeleton[i][0];
       let b = skeleton[i][1];
-      strokeWeight(2);
-      stroke(0);
+      // strokeWeight(2);
+      // stroke(0);
+      strokeWeight(1.5);
+      stroke(255,0,0);
 
       line(a.position.x, a.position.y, b.position.x, b.position.y);
     }
     for (let i = 0; i < pose.keypoints.length; i++) {
       let x = pose.keypoints[i].position.x;
       let y = pose.keypoints[i].position.y;
-      fill(0);
-      stroke(255);
-      ellipse(x, y, 16, 16);
+      // fill(0);
+      // stroke(255);
+      // ellipse(x, y, 16, 16);
+      fill(0, 0, 0);
+      ellipse(x, y, 10, 10);
     }
   }
   pop();
