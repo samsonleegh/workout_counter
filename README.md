@@ -14,7 +14,6 @@ While most computer vision pose estimation models have high accuracy, they are u
 - [Table of contents](#table-of-contents)
 - [Model Architecture](#model-architecture)
 - [Usage](#usage)
-- [Development](#development)
 - [Deployment](#deployment)
 - [References](#references)
 - [License](#license)
