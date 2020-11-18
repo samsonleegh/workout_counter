@@ -80,6 +80,7 @@ In your terminal, `cd` into the model training folder `2_train`.  In the `sketch
 | Layer2 | 16 nodes |
 | Layer2 Act. | ReLU |
 | Class Layer | 2 nodes |
+| Class Act. | Sigmoid |
 | Epochs | 40 |
 | Data Normalisation | True |
 
