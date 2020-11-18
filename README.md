@@ -29,6 +29,8 @@ The underlying pre-trained model from tensorflow.js uses the following specifica
 | Input Resolution | 161 |
 | Detection Type | Single |
 
+The innovative approach of posenet that makes it works while lies in its processing of co-ordinates prediction. The model first predicts the heatmap of 17 sets of joint co-ordinates, a further set of offset vectors (34) are predicted which are used to 'push' the heatmap predictions into the accurate positions. The loss function to be optimised is based on the actual vs predicted differences of joint co-ordinates. For more [details](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5).
+
 Following which, there are two approaches to build a classifying layer on top of the pre-trained layer.
 
 1) <i>Machine-learning based classifier.</i> This approach feeds the output of the pre-trained layer (34 joint co-ordinates of the posture - eyes, elbows, knees, etc.) into a model to learn the exercise movements. The benefit of the approach would be that the learning of the model <b>to identify various components of an exercise pose</b>, only if a human correctly perform these components would the motion be classified as a count. The cons, however, is the <b>requirement of extensive dataset</b> in terms of camera angle and positioning of the various exercises - simply because the machine will not be able to learn/classify exercise in camera positions which it has not captured before.
