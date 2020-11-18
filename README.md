@@ -2,7 +2,7 @@
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/badge/release-v1.0-blue)
 ![GitHub last commit](https://img.shields.io/badge/last%20commit-Nov%2020-yellow)
 
-The introduction of [TensorFlow.js](https://www.tensorflow.org/js/) for [posenet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) has allowed real-time human pose estimation in the browser. While most computer vision models are accurate, they are heavy is size and difficult for deployment. The aim of workout counter is to make use of the light-weighted posenet model wrapped in javascript for functional purposes. We have built a workout classifier on top of a posenet model to count the no. of repetition of various exercises. The intent is to build a platform where people could have easy access to workout counter to motivate their exercises and correct their postures.
+While most computer vision models are accurate, they are heavy is size and difficult for deployment. The introduction of [TensorFlow.js](https://www.tensorflow.org/js/) for [posenet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) has allowed real-time human pose estimation in the browser. The aim of workout counter is to make use of the light-weighted posenet model wrapped in javascript for functional purposes. We have built a workout classifier on top of a posenet model to count the no. of repetition of various exercises. The intent is to build a platform where people could have easy access to workout counter to motivate their exercises and correct their postures.
 
 ## Demo-Preview - access Workout Counter over [here](https://fitcounter.herokuapp.com/)
 ![Random GIF](./images/convai_smile.gif) 
