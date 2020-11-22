@@ -58,7 +58,7 @@ function setup() {
   video.hide();
   poseNet = ml5.poseNet(video, poseNetOptions, modelLoaded);
   poseNet.on('pose', gotPoses);
-  armsUp();
+  sitUp();
 }
 
 // Load PoseNet Model with ml5 wrapper
@@ -82,9 +82,9 @@ function modelLoaded() {
   console.log('poseNet ready');
 }
 
-function armsUp(){
+function sitUp(){
   if (pose) {
-    /* Rule base push up counter */
+    /* Rule base sit up counter */
     let confidenceThreshold = 0.5;
     let downHeightTolerance = 150;
     let upHeightTolerance = 70;
@@ -112,7 +112,7 @@ function armsUp(){
     leftYDist = jointYDistEvaluate(7, 13, confidenceThreshold);
     rightYDist = jointYDistEvaluate(8, 14, confidenceThreshold);
     leftXDist = jointXDistEvaluate(7, 13, confidenceThreshold);
-    righXYDist = jointXDistEvaluate(8, 14, confidenceThreshold);
+    righXDist = jointXDistEvaluate(8, 14, confidenceThreshold);
 
     /*
     * Calculates the angle ABC (in radians) 
@@ -133,7 +133,8 @@ function armsUp(){
           var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));    
           var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2)); 
           var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
-          joinAngle = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+          joinRad = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+          joinAngle = (joinRad * 180) / Math.PI
       } 
       return joinAngle
     }
@@ -145,19 +146,23 @@ function armsUp(){
     function classifyPose() {
       // left OR right knee must be of sit up angle
       // X OR Y distance (depending on position) of elbows and knees should be far from each other
-      if ((leftKneeAngle <= 150 | rightKneeAngle <= 150)
+      if ((leftKneeAngle <= 120 | rightKneeAngle <= 120)
           && ((Math.abs(leftYDist) >= downHeightTolerance) | (Math.abs(rightYDist) >= downHeightTolerance) 
-            |(Math.abs(leftXDist) >= downHeightTolerance) | (Math.abs(righXYDist) >= downHeightTolerance))
+            |(Math.abs(leftXDist) >= downHeightTolerance) | (Math.abs(righXDist) >= downHeightTolerance))
       ) {
         poseLabel = "DOWN";
+        console.log("leftKneeAngle: " + leftKneeAngle);
+        console.log("rightKneeAngle: " + rightKneeAngle);
       }
       // left OR right knee must be of sit up angle
       // X AND Y distance of elbows and knees must be near each other
-      else if ((leftKneeAngle <= 150 | rightKneeAngle <= 150)
+      else if ((leftKneeAngle <= 120 | rightKneeAngle <= 120)
               && (Math.abs(leftYDist) <= upHeightTolerance) && (Math.abs(leftXDist) <= upHeightTolerance)
-                |(Math.abs(rightYDist) <= upHeightTolerance) && (Math.abs(righXYDist) <= upHeightTolerance)
+                |(Math.abs(rightYDist) <= upHeightTolerance) && (Math.abs(righXDist) <= upHeightTolerance)
       ) {
         poseLabel = "UP";
+        console.log("leftKneeAngle: " + leftKneeAngle);
+        console.log("rightKneeAngle: " + rightKneeAngle);
       }
       console.log("poseLabel: " + poseLabel);
 
@@ -183,7 +188,7 @@ function armsUp(){
     classifyPose();
 
   }
-  setTimeout(armsUp, 100);
+  setTimeout(sitUp, 100);
 }
 
 
