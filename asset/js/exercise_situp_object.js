@@ -40,6 +40,7 @@ function countRep() {
       * joint3 second point
       * joint2 center point
       */
+      let joinRad;
       let joinAngle = null;
       if (pose.keypoints[joint1].score >= confidenceThreshold 
         && pose.keypoints[joint2].score >= confidenceThreshold
@@ -51,7 +52,8 @@ function countRep() {
           var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));    
           var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2)); 
           var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
-          joinAngle = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+          joinRad = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+          joinAngle = (joinRad * 180) / Math.PI;
       } 
       return joinAngle
     }
@@ -59,7 +61,7 @@ function countRep() {
     function classifyPose() {
       // left OR right knee must be of sit up angle
       // X OR Y distance (depending on position) of elbows and knees should be far from each other
-      if ((leftKneeAngle <= 150 || rightKneeAngle <= 150)
+      if ((leftKneeAngle <= 120 || rightKneeAngle <= 120)
           && ((Math.abs(leftYDist) >= downHeightTolerance) || (Math.abs(rightYDist) >= downHeightTolerance) 
             || (Math.abs(leftXDist) >= downHeightTolerance) || (Math.abs(rightXDist) >= downHeightTolerance))
       ) {
@@ -67,7 +69,7 @@ function countRep() {
       }
       // left OR right knee must be of sit up angle
       // X AND Y distance of elbows and knees must be near each other
-      else if ((leftKneeAngle <= 150 | rightKneeAngle <= 150)
+      else if ((leftKneeAngle <= 120 | rightKneeAngle <= 120)
               && (((Math.abs(leftYDist) <= upHeightTolerance) && (Math.abs(leftXDist) <= upHeightTolerance))
                 || ((Math.abs(rightYDist) <= upHeightTolerance) && (Math.abs(rightXDist) <= upHeightTolerance)))
       ) {
